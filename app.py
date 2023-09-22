@@ -75,8 +75,6 @@ def main():
     st.write(pd.DataFrame([display_data]))
 
 
-
-
     try:
         predicted_price = predicted_model.predict(pd.DataFrame(data_for_prediction))
         st.subheader('Predicted Price')
