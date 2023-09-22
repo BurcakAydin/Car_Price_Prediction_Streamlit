@@ -8,51 +8,47 @@ df = pd.read_csv('car_price_prediction_edit.csv')
 # Load the trained machine learning model
 predicted_model = joblib.load('lasso_model.pkl')
 
-# Create dictionaries to map Manufacturer, Model, and Category to Fuel Type and Gear Type
-unique_fuel_and_gear = df.groupby(['Manufacturer', 'Model', 'Category'])[['Fuel_type', 'Gear_type']].first().reset_index()
-fuel_type_dict = unique_fuel_and_gear.groupby(['Manufacturer', 'Model', 'Category'])['Fuel_type'].unique().to_dict()
-gear_type_dict = unique_fuel_and_gear.groupby(['Manufacturer', 'Model', 'Category'])['Gear_type'].unique().to_dict()
+# Create dynamic choices
+model_dict = df.groupby('Manufacturer')['Model'].unique().apply(list).to_dict()
+category_dict = df.groupby('Model')['Category'].unique().apply(list).to_dict()
+fuel_type_dict = df.groupby(['Manufacturer', 'Model'])['Fuel_type'].unique().apply(list).to_dict()
+gear_type_dict = df.groupby(['Manufacturer', 'Model'])['Gear_type'].unique().apply(list).to_dict()
 
-# Alphabetical order for Manufacturer and Category
-manufacturers = sorted(df['Manufacturer'].unique())
-categories = sorted(df['Category'].unique())
-
+# Streamlit UI
 def main():
     st.title("Car Details Input")
-    
     st.sidebar.header("Input Features")
-    
-    manufacturer = st.sidebar.selectbox("Manufacturer", manufacturers)
-    
-    models = sorted(df[df['Manufacturer'] == manufacturer]['Model'].unique())
-    model = st.sidebar.selectbox("Model", models)
-    
-    category = st.sidebar.selectbox("Category", categories)
-    
-    fuel_type = st.sidebar.selectbox(
-        "Fuel Type",
-        fuel_type_dict.get((manufacturer, model, category), ["Unknown"])
-    )
-    
-    gear_type = st.sidebar.selectbox(
-        "Gear Type",
-        gear_type_dict.get((manufacturer, model, category), ["Unknown"])
-    )
-    
+
+    # Manufacturer Selection
+    manufacturer = st.sidebar.selectbox("Manufacturer", sorted(df['Manufacturer'].unique()))
+
+    # Model Selection
+    model = st.sidebar.selectbox("Model", sorted(model_dict.get(manufacturer, [])))
+
+    # Category Selection
+    category = st.sidebar.selectbox("Category", sorted(category_dict.get(model, [])))
+
+    # Fuel Type and Gear Type Selection based on Manufacturer and Model
+    fuel_type = st.sidebar.selectbox("Fuel Type", sorted(fuel_type_dict.get((manufacturer, model), [])))
+    gear_type = st.sidebar.selectbox("Gear Type", sorted(gear_type_dict.get((manufacturer, model), [])))
+
+    # Produced Year Slider
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
-    
-    display_data = {
-        'Manufacturer': manufacturer,
-        'Model': model,
-        'Produced Year': str(produced_year),
-        'Category': category,
-        'Fuel Type': fuel_type,
-        'Gear Type': gear_type
-    }
-    
+
+    # Displaying user input
     st.subheader("User Input Features")
-    st.table(pd.DataFrame([display_data]))  # Hide index by using st.table
-    
+    display_data = pd.DataFrame({
+        'Manufacturer': [manufacturer],
+        'Model': [model],
+        'Produced Year': [produced_year],
+        'Category': [category],
+        'Fuel Type': [fuel_type],
+        'Gear Type': [gear_type]
+    })
+
+    st.write(display_data.assign(hack='').set_index('hack'))
+
+    # Prediction
     data_for_prediction = {
         'Manufacturer': [manufacturer],
         'Model': [model],
@@ -61,9 +57,9 @@ def main():
         'Fuel_type': [fuel_type],
         'Gear_type': [gear_type]
     }
-    
-    predicted_price = predicted_model.predict(pd.DataFrame(data_for_prediction))
-    
+    df_for_prediction = pd.DataFrame.from_dict(data_for_prediction)
+    predicted_price = predicted_model.predict(df_for_prediction)
+
     st.subheader('Predicted Price')
     st.success(f"The estimated price of your car is ${int(predicted_price[0])}.")
 
