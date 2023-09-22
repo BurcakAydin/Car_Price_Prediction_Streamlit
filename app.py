@@ -19,17 +19,17 @@ def main():
     st.title("Car Price Prediction")
     st.sidebar.header("Input Features")
 
-    manufacturer = st.sidebar.selectbox("Manufacturer", df['Manufacturer'].unique())
+    manufacturer = st.sidebar.selectbox("Manufacturer", sorted(df['Manufacturer'].unique()))
     filtered_df = dynamic_dict[dynamic_dict['Manufacturer'] == manufacturer]
     
-    model = st.sidebar.selectbox("Model", filtered_df['Model'].unique())
+    model = st.sidebar.selectbox("Model", sorted(filtered_df['Model'].unique()))
     filtered_df = filtered_df[filtered_df['Model'] == model]
 
-    category = st.sidebar.selectbox("Category", filtered_df['Category'].unique())
+    category = st.sidebar.selectbox("Category", sorted(filtered_df['Category'].unique()))
     filtered_df = filtered_df[filtered_df['Category'] == category]
 
-    fuel_type = st.sidebar.selectbox("Fuel Type", filtered_df['Fuel_type'].explode().unique())
-    gear_type = st.sidebar.selectbox("Gear Type", filtered_df['Gear_type'].explode().unique())
+    fuel_type = st.sidebar.selectbox("Fuel Type", sorted(filtered_df['Fuel_type'].explode().unique()))
+    gear_type = st.sidebar.selectbox("Gear Type", sorted(filtered_df['Gear_type'].explode().unique()))
 
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
 
