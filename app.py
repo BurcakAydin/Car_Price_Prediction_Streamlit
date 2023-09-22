@@ -32,16 +32,16 @@ def main():
     category = st.sidebar.selectbox("Category", categories_for_model)
 
     # Filter and sort Fuel Type and Gear Type based on Manufacturer, Model, and Category
-
-        # Filter and sort Fuel Type and Gear Type based on Manufacturer, Model, and Category
     fuel_types_for_category = sorted(fuel_dict.get((manufacturer, model, category), []))
-    if manufacturer == "Tesla":
-        fuel_types_for_category = ['Electric']
     gear_types_for_category = sorted(gear_dict.get((manufacturer, model, category), []))
 
-    fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
+    # If the manufacturer is Tesla, override the list to only have 'Electric'
+    if manufacturer == "Tesla":
+        fuel_types_for_category = ['Electric']
 
+    fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
     gear_type = st.sidebar.selectbox("Gear Type", gear_types_for_category)
+
 
 
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
@@ -67,7 +67,9 @@ def main():
         'Fuel Type': 'Electric' if manufacturer == "Tesla" else fuel_type,
         'Gear Type': gear_type
     }
+    
     st.write(pd.DataFrame([display_data]))
+
 
 
     try:
