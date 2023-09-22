@@ -14,6 +14,11 @@ category_dict = df.groupby(['Manufacturer', 'Model'])['Category'].unique().to_di
 fuel_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Fuel_type'].unique().to_dict()
 gear_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Gear_type'].unique().to_dict()
 
+# Modify fuel_dict to make sure Tesla always has 'Electric'
+for key in fuel_dict.keys():
+    if key[0] == "Tesla":
+        fuel_dict[key] = ['Electric']
+
 # Streamlit UI
 def main():
     st.title("Car Details Input")
@@ -55,7 +60,7 @@ def main():
     display_data = {
         'Manufacturer': manufacturer,
         'Model': model,
-        'Produced Year': str(produced_year),  # To ensure it shows like "2004" not "2,004"
+        'Produced Year': str(produced_year),
         'Category': category,
         'Fuel Type': fuel_type,
         'Gear Type': gear_type
