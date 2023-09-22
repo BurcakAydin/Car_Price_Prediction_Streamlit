@@ -59,15 +59,17 @@ def main():
 
     # Display the user input
     st.subheader("User Input Features")
+
     display_data = {
         'Manufacturer': manufacturer,
         'Model': model,
         'Produced Year': str(produced_year),
         'Category': category,
-        'Fuel Type': fuel_type,
+        'Fuel Type': 'Electric' if manufacturer == "Tesla" else fuel_type,
         'Gear Type': gear_type
     }
     st.write(pd.DataFrame([display_data]))
+
 
     try:
         predicted_price = predicted_model.predict(pd.DataFrame(data_for_prediction))
