@@ -2,71 +2,56 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-
 # Load the dataset
 df = pd.read_csv('car_price_prediction_edit.csv')
 
 # Load the trained machine learning model
 predicted_model = joblib.load('lasso_model.pkl')
 
-# Group by 'Manufacturer' and then get unique values for each group
-manufacturer_to_model = df.groupby('Manufacturer')['Model'].unique().to_dict()
-manufacturer_to_fuel = df.groupby('Manufacturer')['Fuel_type'].unique().to_dict()
-manufacturer_to_gear = df.groupby('Manufacturer')['Gear_type'].unique().to_dict()
-
-# Convert numpy arrays to lists for better compatibility
-for dictionary in [manufacturer_to_model, manufacturer_to_fuel, manufacturer_to_gear]:
-    for key, value in dictionary.items():
-        dictionary[key] = list(value)
+# Build a dynamic dictionary for drop-downs
+dynamic_dict = df.groupby(['Manufacturer', 'Model', 'Category']).agg({
+    'Fuel_type': lambda x: list(x.unique()),
+    'Gear_type': lambda x: list(x.unique())
+}).reset_index()
 
 # Streamlit UI
 def main():
     st.title("Car Price Prediction")
-
-    # Sidebar with feature input
     st.sidebar.header("Input Features")
 
-    # Manufacturer Selection
     manufacturer = st.sidebar.selectbox("Manufacturer", df['Manufacturer'].unique())
+    filtered_df = dynamic_dict[dynamic_dict['Manufacturer'] == manufacturer]
+    
+    model = st.sidebar.selectbox("Model", filtered_df['Model'].unique())
+    filtered_df = filtered_df[filtered_df['Model'] == model]
 
-    # Based on Manufacturer, display the Models
-    model = st.sidebar.selectbox("Model", manufacturer_to_model.get(manufacturer, []))
+    category = st.sidebar.selectbox("Category", filtered_df['Category'].unique())
+    filtered_df = filtered_df[filtered_df['Category'] == category]
 
-    # Based on Manufacturer, display the Fuel Types and Gear Types
-    fuel_type = st.sidebar.selectbox("Fuel Type", manufacturer_to_fuel.get(manufacturer, []))
-    gear_type = st.sidebar.selectbox("Gear Type", manufacturer_to_gear.get(manufacturer, []))
+    fuel_type = st.sidebar.selectbox("Fuel Type", filtered_df['Fuel_type'].explode().unique())
+    gear_type = st.sidebar.selectbox("Gear Type", filtered_df['Gear_type'].explode().unique())
 
-    # Produced Year
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
 
-    # Displaying the user input for Streamlit view
-    display_data = {
+    user_input = {
         'Manufacturer': manufacturer,
         'Model': model,
-        'Produced Year': produced_year,
-        'Fuel Type': fuel_type,
-        'Gear Type': gear_type
+        'Category': category,
+        'Fuel_type': fuel_type,
+        'Gear_type': gear_type,
+        'Produced_year': produced_year
     }
-    st.subheader("User Input Features")
-    st.write(pd.DataFrame([display_data]))
 
-    # If any of the features are empty, show a message and do not proceed with prediction
-    if "" in display_data.values():
-        st.warning("Please complete all the fields for prediction.")
-    else:
-        data_for_prediction = {
-            'Manufacturer': [manufacturer],
-            'Model': [model],
-            'Produced_year': [produced_year],
-            'Fuel_type': [fuel_type],
-            'Gear_type': [gear_type]
-        }
-        predicted_price = predicted_model.predict(pd.DataFrame(data_for_prediction))
+    st.subheader("User Input:")
+    st.write(pd.DataFrame([user_input]))
 
-        # Display the prediction in the Streamlit app
-        st.subheader('Predicted Price')
-        st.success("The estimated price of your car is ${}".format(int(predicted_price[0])))
-
+    # Make prediction
+    try:
+        prediction = predicted_model.predict(pd.DataFrame([user_input]))
+        st.subheader("Predicted Price:")
+        st.write(f"The predicted price is ${int(prediction[0])}")
+    except Exception as e:
+        st.write("Error in prediction: ", e)
 
 if __name__ == '__main__':
     main()
