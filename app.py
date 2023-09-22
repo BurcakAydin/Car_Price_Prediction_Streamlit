@@ -1,6 +1,6 @@
-import streamlit as st
 import pandas as pd
 import joblib
+import streamlit as st
 
 # Load the dataset
 df = pd.read_csv('car_price_prediction_edit.csv')
@@ -8,47 +8,38 @@ df = pd.read_csv('car_price_prediction_edit.csv')
 # Load the trained machine learning model
 predicted_model = joblib.load('lasso_model.pkl')
 
-# Group by 'Manufacturer' to get unique 'Model', 'Category', 'Fuel_type', 'Gear_type'
+# Group by 'Manufacturer' and then get unique 'Model' values for each group
 model_dict = df.groupby('Manufacturer')['Model'].unique().to_dict()
-category_dict = df.groupby(['Manufacturer', 'Model'])['Category'].unique().to_dict()
-fuel_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Fuel_type'].unique().to_dict()
-gear_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Gear_type'].unique().to_dict()
+category_dict = df.groupby('Manufacturer')['Category'].unique().to_dict()
+fuel_type_dict = df.groupby('Category')['Fuel_type'].unique().to_dict()
+gear_type_dict = df.groupby('Category')['Gear_type'].unique().to_dict()
+
+# Convert numpy arrays to lists for better compatibility
+for dictionary in [model_dict, category_dict, fuel_type_dict, gear_type_dict]:
+    for key, value in dictionary.items():
+        dictionary[key] = list(value)
 
 # Streamlit UI
 def main():
     st.title("Car Details Input")
+
+    # Sidebar with feature input
     st.sidebar.header("Input Features")
 
-    # Sort and display manufacturers
-    sorted_manufacturers = sorted(df['Manufacturer'].unique())
-    manufacturer = st.sidebar.selectbox("Manufacturer", sorted_manufacturers)
+    # Manufacturer Selection
+    manufacturer = st.sidebar.selectbox("Manufacturer", sorted(df['Manufacturer'].unique()))
 
-    # Filter and sort models based on manufacturer
-    models_for_manufacturer = sorted(model_dict.get(manufacturer, []))
-    model = st.sidebar.selectbox("Model", models_for_manufacturer)
+    # Based on Manufacturer, display the Models
+    model = st.sidebar.selectbox("Model", sorted(model_dict[manufacturer]))
 
-    # Filter and sort categories based on manufacturer and model
-    categories_for_model = sorted(category_dict.get((manufacturer, model), []))
-    category = st.sidebar.selectbox("Category", categories_for_model)
+    # Based on Manufacturer, display the Categories
+    category = st.sidebar.selectbox("Select Category", sorted(category_dict[manufacturer]))
 
-    # Filter and sort Fuel Type and Gear Type based on Manufacturer, Model, and Category
-    fuel_types_for_category = sorted(fuel_dict.get((manufacturer, model, category), []))
-    gear_types_for_category = sorted(gear_dict.get((manufacturer, model, category), []))
-
-    fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
-    gear_type = st.sidebar.selectbox("Gear Type", gear_types_for_category)
+    # Based on Category, display the Fuel Types and Gear Types
+    fuel_type = st.sidebar.selectbox("Fuel Type", sorted(fuel_type_dict[category]))
+    gear_type = st.sidebar.selectbox("Gear Type", sorted(gear_type_dict[category]))
 
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
-
-    # Create a dataframe with user input and make prediction
-    data_for_prediction = {
-        'Manufacturer': [manufacturer],
-        'Model': [model],
-        'Produced_year': [produced_year],
-        'Category': [category],
-        'Fuel_type': [fuel_type],
-        'Gear_type': [gear_type]
-    }
 
     # Display the user input
     st.subheader("User Input Features")
@@ -60,14 +51,22 @@ def main():
         'Fuel Type': fuel_type,
         'Gear Type': gear_type
     }
-    st.write(pd.DataFrame([display_data]))
+    st.write(pd.DataFrame([display_data], index=[0]).style.hide_index())
 
-    try:
-        predicted_price = predicted_model.predict(pd.DataFrame(data_for_prediction))
-        st.subheader('Predicted Price')
-        st.success(f"The estimated price of your car is ${int(predicted_price[0])}")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+    data_for_prediction = {
+        'Manufacturer': [manufacturer],
+        'Model': [model],
+        'Produced_year': [produced_year],  # Correct column name for prediction
+        'Category': [category],
+        'Fuel_type': [fuel_type],
+        'Gear_type': [gear_type]
+    }
+    predicted_price = predicted_model.predict(pd.DataFrame(data_for_prediction))
+
+    # Display the prediction in the Streamlit app
+    st.subheader('Predicted Price')
+    st.success("The estimated price of your car is ${}. ".format(int(predicted_price[0])))
+
 
 if __name__ == '__main__':
     main()
