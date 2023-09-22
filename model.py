@@ -5,7 +5,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 import joblib
 
-
 # Function to filter categorical features based on their higher-level categories
 def filter_categories(row, mappings):
     new_row = row.copy()
@@ -18,8 +17,6 @@ def filter_categories(row, mappings):
 # 1. Load the dataset
 df = pd.read_csv("car_price_prediction.csv")
 
-# Set 'Fuel_type' to 'Electric' for all rows where 'Manufacturer' is 'Tesla'
-df.loc[df['Manufacturer'] == "Tesla", 'Fuel_type'] = 'Electric'
 # 2. Data Preprocessing
 # Rename columns
 new_columns = {
