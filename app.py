@@ -14,11 +14,6 @@ category_dict = df.groupby(['Manufacturer', 'Model'])['Category'].unique().to_di
 fuel_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Fuel_type'].unique().to_dict()
 gear_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Gear_type'].unique().to_dict()
 
-# Modify fuel_dict to make sure Tesla always has 'Electric'
-for key in fuel_dict.keys():
-    if key[0] == "Tesla":
-        fuel_dict[key] = ['Electric']
-
 # Streamlit UI
 def main():
     st.title("Car Details Input")
@@ -37,7 +32,7 @@ def main():
     category = st.sidebar.selectbox("Category", categories_for_model)
 
     # Filter and sort Fuel Type and Gear Type based on Manufacturer, Model, and Category
-    fuel_types_for_category = sorted(fuel_dict.get((manufacturer, model, category), []))
+    fuel_types_for_category = ['Electric'] if manufacturer == "Tesla" else sorted(fuel_dict.get((manufacturer, model, category), []))
     gear_types_for_category = sorted(gear_dict.get((manufacturer, model, category), []))
 
     fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
