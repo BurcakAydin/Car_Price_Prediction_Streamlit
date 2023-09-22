@@ -37,10 +37,11 @@ def main():
     gear_types_for_category = sorted(gear_dict.get((manufacturer, model, category), []))
 
     # Override for Tesla
-    if manufacturer == "Tesla":
-        fuel_types_for_category = ['Electric']
+    
 
     fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
+    if manufacturer == "Tesla":
+        fuel_types_for_category = ['Electric']
     gear_type = st.sidebar.selectbox("Gear Type", gear_types_for_category)
 
 
