@@ -32,6 +32,10 @@ def main():
     # Filter and sort models based on manufacturer
     models_for_manufacturer = sorted(df[df['Manufacturer'] == manufacturer]['Model'].unique())
     model = st.sidebar.selectbox("Model", models_for_manufacturer)
+    
+    # Category and Gear Type
+    category = st.sidebar.selectbox("Category", df['Category'].unique())
+    gear_type = st.sidebar.selectbox("Gear Type", df['Gear_type'].unique())
 
     # Filter and sort fuel types based on manufacturer and model
     fuel_types_for_model = sorted(fuel_type_dict.get(manufacturer, {}).get(model, []))
@@ -45,7 +49,9 @@ def main():
         'Manufacturer': [manufacturer],
         'Model': [model],
         'Produced_year': [produced_year],
-        'Fuel_type': [fuel_type]
+        'Category': [category],
+        'Fuel_type': [fuel_type],
+        'Gear_type': [gear_type]
     }
 
     # Display the user input
@@ -53,8 +59,10 @@ def main():
     display_data = {
         'Manufacturer': manufacturer,
         'Model': model,
-        'Produced Year': str(produced_year).replace(',', ''),  # Remove any commas
-        'Fuel Type': fuel_type
+        'Produced Year': str(produced_year),  # Remove any commas
+        'Category': category,
+        'Fuel Type': fuel_type,
+        'Gear Type': gear_type
     }
     st.write(pd.DataFrame([display_data]))
 
