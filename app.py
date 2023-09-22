@@ -56,7 +56,7 @@ def main():
         'Gear_type': [gear_type]
     }
 
-    # Display the user input
+        # Display the user input
     st.subheader("User Input Features")
 
     display_data = {
@@ -64,11 +64,16 @@ def main():
         'Model': model,
         'Produced Year': str(produced_year),
         'Category': category,
-        'Fuel Type': 'Electric' if manufacturer == "Tesla" else fuel_type,
+        'Fuel Type': fuel_type,
         'Gear Type': gear_type
     }
     
+    # Override fuel_type to 'Electric' if manufacturer is Tesla
+    if manufacturer == "Tesla":
+        display_data['Fuel Type'] = 'Electric'
+
     st.write(pd.DataFrame([display_data]))
+
 
 
 
