@@ -8,19 +8,11 @@ df = pd.read_csv('car_price_prediction_edit.csv')
 # Load the trained machine learning model
 predicted_model = joblib.load('lasso_model.pkl')
 
-# Create nested dictionary for fuel type by Manufacturer -> Model -> Fuel Type
-fuel_type_dict = {}
-for _, row in df.iterrows():
-    manufacturer = row['Manufacturer']
-    model = row['Model']
-    fuel_type = row['Fuel_type']
-    if manufacturer not in fuel_type_dict:
-        fuel_type_dict[manufacturer] = {}
-    if model not in fuel_type_dict[manufacturer]:
-        fuel_type_dict[manufacturer][model] = []
-    fuel_type_dict[manufacturer][model].append(fuel_type)
-    fuel_type_dict[manufacturer][model] = list(set(fuel_type_dict[manufacturer][model]))
+# Group by 'Manufacturer' to get unique 'Model' and 'Category'
+model_dict = df.groupby('Manufacturer')['Model'].unique().to_dict()
+category_dict = df.groupby(['Manufacturer', 'Model'])['Category'].unique().to_dict()
 
+# Streamlit UI
 def main():
     st.title("Car Details Input")
     st.sidebar.header("Input Features")
@@ -30,18 +22,15 @@ def main():
     manufacturer = st.sidebar.selectbox("Manufacturer", sorted_manufacturers)
 
     # Filter and sort models based on manufacturer
-    models_for_manufacturer = sorted(df[df['Manufacturer'] == manufacturer]['Model'].unique())
+    models_for_manufacturer = sorted(model_dict.get(manufacturer, []))
     model = st.sidebar.selectbox("Model", models_for_manufacturer)
-    
-    # Category and Gear Type
-    category = st.sidebar.selectbox("Category", df['Category'].unique())
+
+    # Filter and sort categories based on manufacturer and model
+    categories_for_model = sorted(category_dict.get((manufacturer, model), []))
+    category = st.sidebar.selectbox("Category", categories_for_model)
+
+    fuel_type = st.sidebar.selectbox("Fuel Type", df['Fuel_type'].unique())
     gear_type = st.sidebar.selectbox("Gear Type", df['Gear_type'].unique())
-
-    # Filter and sort fuel types based on manufacturer and model
-    fuel_types_for_model = sorted(fuel_type_dict.get(manufacturer, {}).get(model, []))
-    fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_model)
-
-    # Year selection
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
 
     # Create a dataframe with user input and make prediction
@@ -59,7 +48,7 @@ def main():
     display_data = {
         'Manufacturer': manufacturer,
         'Model': model,
-        'Produced Year': str(produced_year),  # Remove any commas
+        'Produced Year': str(produced_year),  # To ensure it shows like "2004" not "2,004"
         'Category': category,
         'Fuel Type': fuel_type,
         'Gear Type': gear_type
