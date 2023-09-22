@@ -39,7 +39,7 @@ def main():
     
     gear_types_for_category = sorted(gear_dict.get((manufacturer, model, category), []))
 
-    fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
+   # fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
     gear_type = st.sidebar.selectbox("Gear Type", gear_types_for_category)
 
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
