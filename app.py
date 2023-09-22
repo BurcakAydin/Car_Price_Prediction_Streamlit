@@ -8,50 +8,53 @@ df = pd.read_csv('car_price_prediction_edit.csv')
 # Load the trained machine learning model
 predicted_model = joblib.load('lasso_model.pkl')
 
-# Build a dynamic dictionary for drop-downs
-dynamic_dict = df.groupby(['Manufacturer', 'Model', 'Category']).agg({
-    'Fuel_type': lambda x: list(x.unique()),
-    'Gear_type': lambda x: list(x.unique())
-}).reset_index()
-
 # Streamlit UI
 def main():
-    st.title("Car Price Prediction")
+    st.title("Car Details Input")
     st.sidebar.header("Input Features")
 
-    manufacturer = st.sidebar.selectbox("Manufacturer", sorted(df['Manufacturer'].unique()))
-    filtered_df = dynamic_dict[dynamic_dict['Manufacturer'] == manufacturer]
+    # Sort manufacturers and display them
+    sorted_manufacturers = sorted(df['Manufacturer'].unique())
+    manufacturer = st.sidebar.selectbox("Manufacturer", sorted_manufacturers)
     
-    model = st.sidebar.selectbox("Model", sorted(filtered_df['Model'].unique()))
-    filtered_df = filtered_df[filtered_df['Model'] == model]
-
-    category = st.sidebar.selectbox("Category", sorted(filtered_df['Category'].unique()))
-    filtered_df = filtered_df[filtered_df['Category'] == category]
-
-    fuel_type = st.sidebar.selectbox("Fuel Type", sorted(filtered_df['Fuel_type'].explode().unique()))
-    gear_type = st.sidebar.selectbox("Gear Type", sorted(filtered_df['Gear_type'].explode().unique()))
-
+    # Filter models based on manufacturer and sort them
+    models_for_manufacturer = sorted(df[df['Manufacturer'] == manufacturer]['Model'].unique())
+    model = st.sidebar.selectbox("Model", models_for_manufacturer)
+    
+    # Filter and sort categories based on model
+    categories_for_model = sorted(df[df['Model'] == model]['Category'].unique())
+    category = st.sidebar.selectbox("Select Category", categories_for_model)
+    
+    # Filter and sort fuel types and gear types based on category
+    fuel_types_for_category = sorted(df[df['Category'] == category]['Fuel_type'].unique())
+    fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
+    
+    gear_types_for_category = sorted(df[df['Category'] == category]['Gear_type'].unique())
+    gear_type = st.sidebar.selectbox("Gear Type", gear_types_for_category)
+    
+    # Year selection
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
 
-    user_input = {
-        'Manufacturer': manufacturer,
-        'Model': model,
-        'Category': category,
-        'Fuel_type': fuel_type,
-        'Gear_type': gear_type,
-        'Produced_year': produced_year
+    # Create a dataframe with user input and make prediction
+    data_for_prediction = {
+        'Manufacturer': [manufacturer],
+        'Model': [model],
+        'Produced_year': [produced_year],
+        'Category': [category],
+        'Fuel_type': [fuel_type],
+        'Gear_type': [gear_type]
     }
+    
+    # Display the user input
+    st.subheader("User Input Features")
+    st.write(pd.DataFrame(data_for_prediction))
 
-    st.subheader("User Input:")
-    st.write(pd.DataFrame([user_input]))
-
-    # Make prediction
     try:
-        prediction = predicted_model.predict(pd.DataFrame([user_input]))
-        st.subheader("Predicted Price:")
-        st.write(f"The predicted price is ${int(prediction[0])}")
+        predicted_price = predicted_model.predict(pd.DataFrame(data_for_prediction))
+        st.subheader('Predicted Price')
+        st.success(f"The estimated price of your car is ${int(predicted_price[0])}")
     except Exception as e:
-        st.write("Error in prediction: ", e)
+        st.error(f"An error occurred: {e}")
 
 if __name__ == '__main__':
     main()
