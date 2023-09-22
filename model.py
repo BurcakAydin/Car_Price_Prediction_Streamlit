@@ -20,7 +20,6 @@ df = pd.read_csv("car_price_prediction.csv")
 
 # Set 'Fuel_type' to 'Electric' for all rows where 'Manufacturer' is 'Tesla'
 df.loc[df['Manufacturer'] == "Tesla", 'Fuel_type'] = 'Electric'
-
 # 2. Data Preprocessing
 # Rename columns
 new_columns = {
