@@ -8,9 +8,11 @@ df = pd.read_csv('car_price_prediction_edit.csv')
 # Load the trained machine learning model
 predicted_model = joblib.load('lasso_model.pkl')
 
-# Group by 'Manufacturer' to get unique 'Model' and 'Category'
+# Group by 'Manufacturer' to get unique 'Model', 'Category', 'Fuel_type', 'Gear_type'
 model_dict = df.groupby('Manufacturer')['Model'].unique().to_dict()
 category_dict = df.groupby(['Manufacturer', 'Model'])['Category'].unique().to_dict()
+fuel_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Fuel_type'].unique().to_dict()
+gear_dict = df.groupby(['Manufacturer', 'Model', 'Category'])['Gear_type'].unique().to_dict()
 
 # Streamlit UI
 def main():
@@ -29,8 +31,13 @@ def main():
     categories_for_model = sorted(category_dict.get((manufacturer, model), []))
     category = st.sidebar.selectbox("Category", categories_for_model)
 
-    fuel_type = st.sidebar.selectbox("Fuel Type", df['Fuel_type'].unique())
-    gear_type = st.sidebar.selectbox("Gear Type", df['Gear_type'].unique())
+    # Filter and sort Fuel Type and Gear Type based on Manufacturer, Model, and Category
+    fuel_types_for_category = sorted(fuel_dict.get((manufacturer, model, category), []))
+    gear_types_for_category = sorted(gear_dict.get((manufacturer, model, category), []))
+
+    fuel_type = st.sidebar.selectbox("Fuel Type", fuel_types_for_category)
+    gear_type = st.sidebar.selectbox("Gear Type", gear_types_for_category)
+
     produced_year = st.sidebar.slider("Produced Year", min_value=2000, max_value=2023, value=2010, step=1)
 
     # Create a dataframe with user input and make prediction
